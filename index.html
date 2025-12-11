@@ -1,40 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Weather App</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WeatherSphere</title>
 
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 </head>
+<body>
+  <div id="app" class="app">
+    <header class="top card">
+      <div class="brand">WeatherSphere</div>
+      <div class="search-wrap">
+        <div style="position:relative">
+          <input id="searchInput" placeholder="Search locality, village, town, block..." autocomplete="off" />
+          <div id="autocomplete" class="autocomplete-list hidden"></div>
+        </div>
+        <button id="searchBtn">Search</button>
+      </div>
+    </header>
 
-<body id="app-body" class="light-text">
-
-    <div class="app">
-
-        <h2 class="title">Weather App</h2>
-
-        <div class="search-box">
-            <input type="text" id="input-box" placeholder="Search city..." />
-            <button id="search-btn" aria-label="Search">
-                <i class="fa fa-search"></i>
-            </button>
+    <main class="grid">
+      <aside>
+        <div class="card current" id="currentCard">
+          <div id="loader" class="loader hidden"></div>
+          <div class="top" id="currentTop"></div>
+          <div id="extraMeta"></div>
         </div>
 
-        <div id="current-weather" class="current-weather"></div>
+        <div class="card">
+          <h4>Sun & Moon</h4>
+          <div id="sunmoon"></div>
+        </div>
 
-        <h3 class="forecast-title">Hourly Forecast</h3>
-        <div id="hourly" class="hourly"></div>
+        <div class="card">
+          <h4>Favorites</h4>
+          <div id="favorites"></div>
+        </div>
+      </aside>
 
-        <h3 class="forecast-title">5-Day Forecast</h3>
-        <div id="forecast" class="forecast"></div>
+      <section>
+        <div class="card map-wrap">
+          <div id="map"></div>
+          <div id="overlay" class="overlay"></div>
+          <div id="miniMap" class="mini-map"></div>
+        </div>
 
-    </div>
+        <div class="card">
+          <h4>Hourly</h4>
+          <div id="hourly" class="hourly"></div>
+        </div>
 
-    <script src="script.js"></script>
+        <div class="card">
+          <h4>5-Day</h4>
+          <div id="daily" class="daily-grid"></div>
+        </div>
+
+        <div id="dashboard" class="dashboard hidden">
+          <div class="card chart-canvas"><h5>AQI (nearest)</h5><canvas id="aqiChart"></canvas></div>
+          <div class="card chart-canvas"><h5>UV Index (today)</h5><canvas id="uvChart"></canvas></div>
+          <div class="card chart-canvas"><h5>Humidity (next 24h)</h5><canvas id="humChart"></canvas></div>
+          <div class="card chart-canvas"><h5>Wind Rose (24h)</h5><canvas id="windChart"></canvas></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="card footer">Powered by Open-Meteo & OpenStreetMap • Click map to get precise locality- Made by Himansu</footer>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>

@@ -1,205 +1,258 @@
-// WEATHER API
-const API_KEY = "4eb3703790b356562054106543b748b2";
+/* ==========================
+   CONFIG (No API Keys Needed)
+   ========================== */
+const WEATHER_BASE = 'https://api.open-meteo.com/v1/forecast';
+const GEOCODE_BASE = 'https://nominatim.openstreetmap.org/search';
+const REVERSE_BASE = 'https://nominatim.openstreetmap.org/reverse';
+const OPENAQ_BASE = 'https://api.openaq.org/v3/latest';
 
-const input = document.getElementById("input-box");
-const searchBtn = document.getElementById("search-btn");
-const currentWeatherBox = document.getElementById("current-weather");
-const forecastBox = document.getElementById("forecast");
-const hourlyBox = document.getElementById("hourly");
+/* ==========================
+   DOM REFERENCES
+   ========================== */
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const autocompleteEl = document.getElementById('autocomplete');
+const loader = document.getElementById('loader');
+const currentTop = document.getElementById('currentTop');
+const hourlyEl = document.getElementById('hourly');
+const dailyEl = document.getElementById('daily');
+const sunmoonEl = document.getElementById('sunmoon');
+const overlay = document.getElementById('overlay');
+const dashboardEl = document.getElementById('dashboard');
+let map, miniMap;
+let aqiChart, uvChart, humChart, windChart;
 
+/* ==========================
+   HELPERS
+   ========================== */
+function showLoader(s = true){ loader.classList.toggle('hidden', !s); }
+function debounce(fn, wait){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); }; }
 
-// EVENT LISTENERS
-searchBtn.addEventListener("click", () => getWeatherByCity(input.value));
-input.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") getWeatherByCity(input.value);
+/* ==========================
+   GEOCODING
+   ========================== */
+async function geocode(q, limit=5){
+  const url = `${GEOCODE_BASE}?format=json&q=${encodeURIComponent(q)}&limit=${limit}&addressdetails=1`;
+  const r = await fetch(url, {headers:{'User-Agent':'WeatherSphere/1.0'}});
+  return r.json();
+}
+
+async function reverseGeocode(lat, lon){
+  const url = `${REVERSE_BASE}?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+  const r = await fetch(url, {headers:{'User-Agent':'WeatherSphere/1.0'}});
+  return r.json();
+}
+
+/* ==========================
+   AUTOCOMPLETE
+   ========================== */
+searchInput.addEventListener('input', debounce(async (e)=>{
+  const q = e.target.value.trim();
+  if(!q){ autocompleteEl.classList.add('hidden'); return; }
+
+  const res = await geocode(q, 5);
+  if(!res.length){ autocompleteEl.classList.add('hidden'); return; }
+
+  autocompleteEl.innerHTML = res.map(r=>`
+    <div class="autocomplete-item" data-lat="${r.lat}" data-lon="${r.lon}" data-d="${encodeURIComponent(r.display_name)}">${r.display_name}</div>
+  `).join('');
+  autocompleteEl.classList.remove('hidden');
+}, 250));
+
+autocompleteEl.addEventListener('click', (e)=>{
+  const item = e.target.closest('.autocomplete-item');
+  if(!item) return;
+  autocompleteEl.classList.add('hidden');
+
+  const lat = parseFloat(item.dataset.lat);
+  const lon = parseFloat(item.dataset.lon);
+  const name = decodeURIComponent(item.dataset.d);
+
+  flyToAndLoad(lat, lon, name);
 });
 
+/* ==========================
+   WEATHER FETCH
+   ========================== */
+async function fetchWeather(lat, lon){
+  const params = [
+    'current_weather=true',
+    'hourly=temperature_2m,relativehumidity_2m,weathercode,windspeed_10m,uv_index',
+    'daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max',
+    'timezone=auto'
+  ].join('&');
 
-// ----------------------------
-// AUTO LOCATION ON LOAD
-// ----------------------------
-window.onload = () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => getWeatherByCoords(pos.coords.latitude, pos.coords.longitude),
-            () => console.warn("Location blocked. User must search manually.")
-        );
-    }
-};
-
-
-// ----------------------------
-// FETCH BY CITY
-// ----------------------------
-function getWeatherByCity(city) {
-    if (!city.trim()) return alert("Enter a valid city name.");
-
-    fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
-    )
-        .then((res) => res.json())
-        .then((data) => {
-            if (data.cod == "404") return alert("City not found.");
-            handleWeatherData(data);
-        })
-        .catch(() => alert("Weather fetch failed."));
+  const url = `${WEATHER_BASE}?latitude=${lat}&longitude=${lon}&${params}`;
+  const r = await fetch(url);
+  return r.json();
 }
 
-
-// ----------------------------
-// FETCH BY COORDS
-// ----------------------------
-function getWeatherByCoords(lat, lon) {
-    fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-    )
-        .then((res) => res.json())
-        .then((data) => handleWeatherData(data))
-        .catch(() => alert("Location weather failed."));
+async function fetchAqi(lat, lon){
+  const url = `${OPENAQ_BASE}?coordinates=${lat},${lon}&radius=50000&limit=10`;
+  return fetch(url).then(r=>r.json()).catch(()=>null);
 }
 
-
-// ----------------------------
-// PROCESS WEATHER DATA
-// ----------------------------
-function handleWeatherData(data) {
-    showCurrentWeather(data);
-    getForecast(data.coord.lat, data.coord.lon);
-    changeBackground(data.weather[0].main);
+/* ==========================
+   RENDERING
+   ========================== */
+function iconFor(code){
+  if(code===0) return 'icons/sun.svg';
+  if(code===1||code===2) return 'icons/partly-day.svg';
+  if(code>=3 && code<50) return 'icons/cloud.svg';
+  if(code>=51 && code<80) return 'icons/rain.svg';
+  if(code>=70) return 'icons/snow.svg';
+  return 'icons/cloud.svg';
 }
 
+function translation(code){
+  const t = {0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',61:'Slight rain',71:'Slight snow'};
+  return t[code] || '—';
+}
 
-// ----------------------------
-// DISPLAY CURRENT WEATHER
-// ----------------------------
-function showCurrentWeather(data) {
-    currentWeatherBox.innerHTML = `
-        <h2>${data.name}, ${data.sys.country}</h2>
+function renderCurrent(data, name){
+  const cur = data.current_weather;
+  currentTop.innerHTML = `
+    <div style="display:flex;gap:12px;align-items:center">
+      <img src="${iconFor(cur.weathercode)}" width="110" />
+      <div>
+        <div style="font-size:18px;font-weight:700">${name}</div>
+        <div class="temp">${Math.round(cur.temperature)}°C</div>
+        <div class="meta">Wind: ${cur.windspeed} km/h • ${translation(cur.weathercode)}</div>
+      </div>
+    </div>
+  `;
+}
 
-        <div class="temp">${Math.round(data.main.temp)}°C</div>
-
-        <div class="meta">${data.weather[0].main}</div>
-        <div class="meta">Humidity: ${data.main.humidity}%</div>
-        <div class="meta">Wind: ${data.wind.speed} km/h</div>
+function renderHourly(data){
+  hourlyEl.innerHTML = '';
+  const h = data.hourly;
+  for(let i=0;i<24;i+=4){
+    const el = document.createElement('div');
+    el.className = 'hour';
+    el.innerHTML = `
+      <div>${h.time[i].slice(11,16)}</div>
+      <img src="${iconFor(h.weathercode[i])}" width="48" />
+      <div>${Math.round(h.temperature_2m[i])}°C</div>
     `;
+    hourlyEl.appendChild(el);
+  }
 }
 
-
-// ----------------------------
-// GET FORECAST
-// ----------------------------
-function getForecast(lat, lon) {
-    fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
-    )
-        .then((res) => res.json())
-        .then((data) => {
-            showForecast(data.list);
-            showHourly(data.list);
-        });
+function renderDaily(data){
+  dailyEl.innerHTML = '';
+  const d = data.daily;
+  for(let i=0;i<5;i++){
+    const el = document.createElement('div');
+    el.className = 'card forecast';
+    el.innerHTML = `
+      <div style="text-align:center">
+        <div>${d.time[i]}</div>
+        <img src="${iconFor(d.weathercode[i])}" width="56" />
+        <div>${Math.round(d.temperature_2m_max[i])}°/${Math.round(d.temperature_2m_min[i])}°</div>
+      </div>
+    `;
+    dailyEl.appendChild(el);
+  }
 }
 
+function renderSunMoon(data){
+  const d = data.daily;
+  sunmoonEl.innerHTML = `Sunrise: ${d.sunrise[0].slice(11,16)} • Sunset: ${d.sunset[0].slice(11,16)} • UV: ${d.uv_index_max[0]}`;
+}
 
-// ----------------------------
-// 5-DAY FORECAST
-// ----------------------------
-function showForecast(list) {
-    forecastBox.innerHTML = "";
-    const daily = list.filter((item) => item.dt_txt.includes("12:00:00"));
+function setOverlayForWeather(code){
+  overlay.className = 'overlay';
+  if(code>=51 && code<80){ overlay.classList.add('rain'); }
+  else if(code>=70){ overlay.classList.add('snow'); }
+  else if(code>=80){ overlay.classList.add('storm'); }
+}
 
-    daily.forEach((d) => {
-        const date = new Date(d.dt_txt)
-            .toDateString()
-            .split(" ")
-            .slice(0, 3)
-            .join(" ");
+/* ==========================
+   DASHBOARD (CHARTS)
+   ========================== */
+function ensureCharts(){
+  aqiChart = new Chart(document.getElementById('aqiChart'), {type:'bar',data:{labels:[],datasets:[{label:'PM2.5',data:[]}]}});
+  uvChart = new Chart(document.getElementById('uvChart'), {type:'line',data:{labels:[],datasets:[{label:'UV',data:[],fill:true}]}});
+  humChart = new Chart(document.getElementById('humChart'), {type:'line',data:{labels:[],datasets:[{label:'Humidity %',data:[]}]}});
+  windChart = new Chart(document.getElementById('windChart'), {type:'polarArea',data:{labels:['N','NE','E','SE','S','SW','W','NW'],datasets:[{label:'Wind',data:[]}]}});
+}
 
-        forecastBox.innerHTML += `
-            <div class="forecast-card">
-                <h4>${date}</h4>
-                <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png" />
-                <div class="temp">${Math.round(d.main.temp)}°C</div>
-                <div>${d.weather[0].main}</div>
-            </div>
-        `;
+async function renderDashboard(lat, lon, weather){
+  const aq = await fetchAqi(lat,lon);
+  if(aq && aq.results){
+    const r = aq.results.slice(0,6);
+    aqiChart.data.labels = r.map(x=>x.location);
+    aqiChart.data.datasets[0].data = r.map(x=>{
+      const m = x.measurements.find(m=>m.parameter==='pm25');
+      return m?m.value:0;
     });
+    aqiChart.update();
+  }
+
+  const h = weather.hourly;
+  uvChart.data.labels = h.time.slice(0,24).map(t=>t.slice(11,16));
+  uvChart.data.datasets[0].data = h.uv_index.slice(0,24);
+  uvChart.update();
+
+  humChart.data.labels = uvChart.data.labels;
+  humChart.data.datasets[0].data = h.relativehumidity_2m.slice(0,24);
+  humChart.update();
+
+  windChart.data.datasets[0].data = h.windspeed_10m.slice(0,8);
+  windChart.update();
 }
 
+/* ==========================
+   MAP + MINI MAP
+   ========================== */
+function initMap(){
+  map = L.map('map').setView([20.29,85.82],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM'}).addTo(map);
 
-// ----------------------------
-// HOURLY (NEXT 12 HOURS)
-// ----------------------------
-function showHourly(list) {
-    hourlyBox.innerHTML = "";
-    const nextHours = list.slice(0, 6);
-
-    nextHours.forEach((h) => {
-        const time = new Date(h.dt_txt).toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-        });
-
-        hourlyBox.innerHTML += `
-            <div class="hour-card">
-                <h4>${time}</h4>
-                <img src="https://openweathermap.org/img/wn/${h.weather[0].icon}@2x.png" />
-                <div class="temp">${Math.round(h.main.temp)}°C</div>
-                <div>${h.weather[0].main}</div>
-            </div>
-        `;
-    });
+  map.on('click', async (ev)=>{
+    const {lat, lng} = ev.latlng;
+    const rev = await reverseGeocode(lat,lng);
+    flytoAndLoad(lat, lng, rev.display_name || `Lat: ${lat.toFixed(2)}, Lon: ${lng.toFixed(2)}`);
+  });
 }
 
-
-
-// ----------------------------
-// AUTO-CONTRAST FUNCTION
-// ----------------------------
-function autoTextContrast(gradient) {
-    const firstColor = gradient.match(/#([0-9a-fA-F]{6})/)[0];
-
-    const r = parseInt(firstColor.substr(1, 2), 16);
-    const g = parseInt(firstColor.substr(3, 2), 16);
-    const b = parseInt(firstColor.substr(5, 2), 16);
-
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-
-    const body = document.getElementById("app-body");
-
-    if (luminance > 150) {
-        body.classList.add("dark-text");
-        body.classList.remove("light-text");
-    } else {
-        body.classList.add("light-text");
-        body.classList.remove("dark-text");
-    }
+function initMiniMap(){
+  miniMap = L.map('miniMap',{zoomControl:false,attributionControl:false}).setView([0,0],2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);
 }
 
-
-
-// ----------------------------
-// BACKGROUND GRADIENT SYSTEM
-// ----------------------------
-function changeBackground(condition) {
-    const gradients = {
-        Clear: "linear-gradient(135deg, #ffe259, #ffa751, #ff7b00)",
-        Clouds: "linear-gradient(135deg, #a1c4fd, #c2e9fb, #cfd9df)",
-        Rain: "linear-gradient(135deg, #283048, #859398)",
-        Thunderstorm: "linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b)",
-        Drizzle: "linear-gradient(135deg, #89f7fe, #66a6ff)",
-        Snow: "linear-gradient(135deg, #e0eafc, #cfdef3, #f7f7f7)",
-        Mist: "linear-gradient(135deg, #757f9a, #d7dde8)",
-        Fog: "linear-gradient(135deg, #757f9a, #d7dde8)",
-        Haze: "linear-gradient(135deg, #b3cdd1, #9fa4c4, #6f86d6)"
-    };
-
-    const defaultBg =
-        "linear-gradient(135deg, #4facfe, #00f2fe, #43e97b)";
-
-    const bg = gradients[condition] || defaultBg;
-
-    document.body.style.background = bg;
-    document.body.style.backgroundSize = "400% 400%";
-
-    autoTextContrast(bg);
+function flyToAndLoad(lat, lon, name){
+  showLoader(true);
+  map.flyTo([lat, lon], 10, {duration:2});
+  loadWeatherForLocation(lat, lon, name);
 }
+
+/* ==========================
+   LOAD WEATHER FOR LOCATION
+   ========================== */
+async function loadWeatherForLocation(lat, lon, name){
+  try {
+    const weather = await fetchWeather(lat, lon);
+    renderCurrent(weather, name);
+    renderHourly(weather);
+    renderDaily(weather);
+    renderSunMoon(weather);
+    setOverlayForWeather(weather.current_weather.weathercode);
+    await renderDashboard(lat, lon, weather);
+  } catch(err) {
+    console.error('Error loading weather:', err);
+  } finally {
+    showLoader(false);
+  }
+}
+
+/* ==========================
+   INITIALIZATION
+   ========================== */
+window.onload = ()=>{
+  initMap();
+  initMiniMap();
+  ensureCharts();
+  showLoader(false);
+};  
+
