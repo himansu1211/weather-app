@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="r1" x1="0" x2="1">
+      <stop offset="0%" stop-color="#a7d3ff"/>
+      <stop offset="100%" stop-color="#6bb1ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- cloud -->
+  <ellipse cx="60" cy="50" rx="36" ry="24" fill="#e6f2ff"/>
+  <ellipse cx="88" cy="48" rx="20" ry="16" fill="#d7ecff"/>
+  <ellipse cx="36" cy="48" rx="18" ry="14" fill="#dbeefc"/>
+
+  <!-- raindrops -->
+  <g transform="translate(20,62)" fill="url(#r1)">
+    <path d="M8 0c4 0 8 6 8 10s-4 10-8 10S0 16 0 10 4 0 8 0z"/>
+    <path d="M38 0c4 0 8 6 8 10s-4 10-8 10S30 16 30 10 34 0 38 0z" transform="translate(20,0)"/>
+    <path d="M68 0c4 0 8 6 8 10s-4 10-8 10S60 16 60 10 64 0 68 0z" transform="translate(40,0)"/>
+  </g>
+</svg>

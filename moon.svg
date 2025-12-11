@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="m1" cx="30%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#f8fbff"/>
+      <stop offset="60%" stop-color="#d8e8ff"/>
+      <stop offset="100%" stop-color="#aac4ff"/>
+    </radialGradient>
+    <linearGradient id="m2" x1="0" x2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.8)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.05)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- crescent base -->
+  <path d="M86 22a36 36 0 1 0 0 72c1.6 0 3.2-.04 4.8-.12A44 44 0 1 1 86 22z" fill="url(#m1)"/>
+  <!-- subtle shadow to create depth -->
+  <ellipse cx="98" cy="36" rx="12" ry="18" fill="rgba(0,0,0,0.08)"/>
+  <!-- highlight -->
+  <path d="M74 34a18 18 0 0 0-6 28 28 28 0 0 1 18-38 32 32 0 0 0-12 10z" fill="url(#m2)"/>
+</svg>
+

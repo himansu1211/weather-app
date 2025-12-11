@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="st1" x1="0" x2="1">
+      <stop offset="0%" stop-color="#ffeaa7"/>
+      <stop offset="100%" stop-color="#ff9f5a"/>
+    </linearGradient>
+    <linearGradient id="st2" x1="0" x2="1">
+      <stop offset="0%" stop-color="#e6f2ff"/>
+      <stop offset="100%" stop-color="#c2dfff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- cloud -->
+  <ellipse cx="56" cy="46" rx="36" ry="24" fill="url(#st2)"/>
+  <ellipse cx="86" cy="44" rx="20" ry="16" fill="#d7ecff"/>
+
+  <!-- lightning -->
+  <path d="M62 70 L88 46 L70 46 L96 22 L68 54 L84 54 Z" fill="url(#st1)" transform="translate(-10,10)"/>
+</svg>
