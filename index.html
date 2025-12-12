@@ -10,15 +10,56 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+
+  <!-- INLINE SVG ICON SPRITE (WORKS 100%) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5" fill="currentColor" />
+      <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="12" y1="1" x2="12" y2="4"/>
+        <line x1="12" y1="20" x2="12" y2="23"/>
+        <line x1="1" y1="12" x2="4" y2="12"/>
+        <line x1="20" y1="12" x2="23" y2="12"/>
+        <line x1="4.2" y1="4.2" x2="6.5" y2="6.5"/>
+        <line x1="17.5" y1="17.5" x2="19.8" y2="19.8"/>
+        <line x1="4.2" y1="19.8" x2="6.5" y2="17.5"/>
+        <line x1="17.5" y1="6.5" x2="19.8" y2="4.2"/>
+      </g>
+    </symbol>
+
+    <symbol id="partly-day" viewBox="0 0 24 24">
+      <circle cx="8" cy="10" r="4" fill="currentColor"/>
+      <path d="M14 10a4 4 0 110 8H7a4 4 0 110-8h7z" fill="currentColor"/>
+    </symbol>
+
+    <symbol id="cloud" viewBox="0 0 24 24">
+      <path d="M7 18h10a4 4 0 000-8 6 6 0 10-11.7 2A4 4 0 007 18z" fill="currentColor"/>
+    </symbol>
+
+    <symbol id="rain" viewBox="0 0 24 24">
+      <path d="M7 16h10a4 4 0 000-8 6 6 0 10-11.7 2A4 4 0 007 16z" fill="currentColor"/>
+      <line x1="9" y1="18" x2="9" y2="22" stroke="currentColor" stroke-width="2"/>
+      <line x1="13" y1="18" x2="13" y2="22" stroke="currentColor" stroke-width="2"/>
+      <line x1="17" y1="18" x2="17" y2="22" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+
+    <symbol id="snow" viewBox="0 0 24 24">
+      <path d="M7 16h10a4 4 0 000-8 6 6 0 10-11.7 2A4 4 0 007 16z" fill="currentColor"/>
+      <text x="12" y="20" font-size="10" text-anchor="middle" fill="currentColor">*</text>
+    </symbol>
+  </svg>
+
   <div id="app" class="app">
     <header class="top card">
       <div class="brand">WeatherSphere</div>
+
       <div class="search-wrap">
         <div style="position:relative">
-          <input id="searchInput" placeholder="Search locality, village, town, block..." autocomplete="off" />
+          <input id="searchInput" placeholder="Search locality..." autocomplete="off" />
           <div id="autocomplete" class="autocomplete-list hidden"></div>
         </div>
         <button id="searchBtn">Search</button>
+        <button id="locationBtn">📍</button>
       </div>
     </header>
 
@@ -27,17 +68,11 @@
         <div class="card current" id="currentCard">
           <div id="loader" class="loader hidden"></div>
           <div class="top" id="currentTop"></div>
-          <div id="extraMeta"></div>
         </div>
 
         <div class="card">
           <h4>Sun & Moon</h4>
           <div id="sunmoon"></div>
-        </div>
-
-        <div class="card">
-          <h4>Favorites</h4>
-          <div id="favorites"></div>
         </div>
       </aside>
 
@@ -59,15 +94,15 @@
         </div>
 
         <div id="dashboard" class="dashboard hidden">
-          <div class="card chart-canvas"><h5>AQI (nearest)</h5><canvas id="aqiChart"></canvas></div>
-          <div class="card chart-canvas"><h5>UV Index (today)</h5><canvas id="uvChart"></canvas></div>
-          <div class="card chart-canvas"><h5>Humidity (next 24h)</h5><canvas id="humChart"></canvas></div>
-          <div class="card chart-canvas"><h5>Wind Rose (24h)</h5><canvas id="windChart"></canvas></div>
+          <div class="card chart-canvas"><canvas id="aqiChart"></canvas></div>
+          <div class="card chart-canvas"><canvas id="uvChart"></canvas></div>
+          <div class="card chart-canvas"><canvas id="humChart"></canvas></div>
+          <div class="card chart-canvas"><canvas id="windChart"></canvas></div>
         </div>
       </section>
     </main>
 
-    <footer class="card footer">Powered by Open-Meteo & OpenStreetMap • Click map to get precise locality- Made by Himansu</footer>
+    <footer class="card footer">Made by Himansu</footer>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
