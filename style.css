@@ -1,4 +1,3 @@
-/* ===================== GLOBAL ===================== */
 :root{
   --bg-1:#071026;
   --bg-2:#0b2540;
@@ -6,13 +5,6 @@
   --accent:#6d28d9;
   --glass:rgba(255,255,255,0.03);
   color:white;
-}
-.theme-light{
-  --bg-1:#f4f7fb;
-  --bg-2:#e7eefb;
-  --card:rgba(0,0,0,0.05);
-  --accent:#2563eb;
-  color:#0b1220;
 }
 body{
   font-family:Inter,system-ui;
@@ -22,65 +14,41 @@ body{
 .app{max-width:1200px;margin:auto;padding:16px}
 .card{background:var(--card);padding:12px;border-radius:12px;margin-bottom:12px}
 
-/* ===================== HEADER ===================== */
 .top{display:flex;align-items:center;gap:12px}
 .brand{font-weight:700;font-size:20px}
 .search-wrap{display:flex;gap:8px;margin-left:auto}
 #searchInput{padding:10px;border-radius:10px;border:none;min-width:260px;background:var(--glass);color:inherit}
-#searchBtn{padding:10px 14px;border:none;border-radius:10px;background:var(--accent);color:white;cursor:pointer}
+#searchBtn,#locationBtn{padding:10px 14px;border:none;border-radius:10px;background:var(--accent);color:white;cursor:pointer}
+
 .autocomplete-list{position:absolute;background:var(--card);border-radius:8px;margin-top:6px;box-shadow:0 6px 20px rgba(0,0,0,0.25);z-index:1000}
 .autocomplete-item{padding:8px 10px;cursor:pointer}
 .autocomplete-item:hover{background:rgba(255,255,255,0.05)}
 
-.toggle{padding:8px;background:rgba(255,255,255,0.04);border-radius:8px;cursor:pointer}
-
-/* ===================== GRID ===================== */
 .grid{display:grid;grid-template-columns:360px 1fr;gap:14px;margin-top:14px}
 
-/* ===================== CURRENT ===================== */
 .current .top{display:flex;align-items:center;gap:12px}
-.current img{width:110px;height:110px}
 .temp{font-size:44px;font-weight:700}
-.meta{opacity:.9}
 .loader{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:50%;border:4px solid rgba(255,255,255,0.15);border-top-color:var(--accent);animation:spin .8s linear infinite}
 .hidden{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ===================== MAP ===================== */
-.map-wrap{position:relative}
 #map{height:360px;border-radius:12px}
+.map-wrap{position:relative}
 .mini-map{position:absolute;right:18px;bottom:18px;width:180px;height:120px;border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,0.06)}
 .overlay{position:absolute;inset:0;pointer-events:none;border-radius:12px}
 
-/* rain */
-.overlay.rain{background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.07)0 2px,transparent 2px 8px);animation:rainfall 1s linear infinite}
-@keyframes rainfall{from{background-position:0 0}to{background-position:0 30px}}
-
-/* snow */
-.overlay.snow{background-image:radial-gradient(circle at 10% 10%,rgba(255,255,255,0.9)2px,transparent 3px),radial-gradient(circle at 50% 30%,rgba(255,255,255,0.9)2px,transparent 3px);animation:snowfall 6s linear infinite}
-@keyframes snowfall{from{background-position:0 0}to{background-position:0 120px}}
-
-/* storm */
-.overlay.storm{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));box-shadow:inset 0 0 120px rgba(0,0,0,0.35)}
-
-/* ===================== HOURLY ===================== */
 .hourly{display:flex;overflow-x:auto;gap:8px;padding:8px 0}
 .hour{min-width:100px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;text-align:center}
 
-/* ===================== DAILY ===================== */
 .daily-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 
-/* ===================== DASHBOARD ===================== */
 .dashboard{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
 .chart-canvas{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)}
 
-/* ===================== FOOTER ===================== */
 .footer{text-align:center;opacity:.8}
 
-/* ===================== RESPONSIVE ===================== */
 @media(max-width:880px){
   .grid{grid-template-columns:1fr}
-  #searchInput{min-width:160px}
 }
 @media(max-width:480px){
   .top{flex-direction:column;align-items:flex-start}
